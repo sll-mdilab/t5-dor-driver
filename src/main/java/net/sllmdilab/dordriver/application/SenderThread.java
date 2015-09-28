@@ -35,13 +35,14 @@ public class SenderThread extends Thread {
 	private List<String> messages;
 	private int numMessages;
 	private long millisDelay;
+	private boolean keepOriginalTimestamp = false; // Default
 	private int sentMessages;
 	private SenderThreadResult result;
 	private HapiContext hapiContext;
 	private Hl7Client hl7Client;
 	private ThreadPoolExecutor threadPoolExecutor;
 
-	public SenderThread(String destAddess, int destPort, List<String> messages, int numMessages, long millisDelay,
+	public SenderThread(String destAddress, int destPort, List<String> messages, int numMessages, long millisDelay,
 			SenderThreadResult result) {
 
 		this.messages = messages;
@@ -59,7 +60,13 @@ public class SenderThread extends Thread {
 		hapiContext = new DefaultHapiContext(threadPoolExecutor);
 		hapiContext.setModelClassFactory(canonicalModelClassFactory);
 
-		hl7Client = new Hl7Client(hapiContext, destAddess, destPort, false);
+		hl7Client = new Hl7Client(hapiContext, destAddress, destPort, false);
+	}
+
+	public SenderThread(String destAddress, int destPort, List<String> messages, int numMessages, long millisDelay,
+			SenderThreadResult result, boolean keepOriginalTimestamp) {
+		this(destAddress, destPort, messages, numMessages, millisDelay, result);
+		this.keepOriginalTimestamp = keepOriginalTimestamp;
 	}
 
 	@Override
@@ -147,7 +154,6 @@ public class SenderThread extends Thread {
 					// Continuation not as important for parametric data, hence calculating a new one.
 					timestampDifference = getTimestampDifference(firstMessage);
 				}
-
 			}
 			long stopIterTimeMillis = System.currentTimeMillis();
 			long iterDuration = stopIterTimeMillis - startIterTimeMillis;
@@ -215,7 +221,9 @@ public class SenderThread extends Thread {
 	 */
 	private void injectTimestampsForMessage(ORU_R01 message, Duration timestampDifference) throws HL7Exception {
 		message.getMSH().getDateTimeOfMessage().setValue(new Date());
-
+		if(this.keepOriginalTimestamp){
+			return;
+		}
 		for (ORU_R01_PATIENT_RESULT patientResult : message.getPATIENT_RESULTAll()) {
 			for (ORU_R01_ORDER_OBSERVATION orderObservation : patientResult.getORDER_OBSERVATIONAll()) {
 				injectTimestampsForOrderObservation(timestampDifference, orderObservation);
