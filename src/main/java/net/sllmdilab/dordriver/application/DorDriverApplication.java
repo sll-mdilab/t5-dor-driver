@@ -1,7 +1,9 @@
 package net.sllmdilab.dordriver.application;
 
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,23 +22,43 @@ import ca.uhn.hl7v2.parser.CanonicalModelClassFactory;
 import ca.uhn.hl7v2.parser.PipeParser;
 import ca.uhn.hl7v2.util.Hl7InputStreamMessageStringIterator;
 
-public class DorDriverApplication {
+public class DorDriverApplication implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(DorDriverApplication.class);
 
-	private int numMessages = 1;
-	private long millisDelay = 0;
+	private Integer numMessages = 1;
+	private Long millisDelay = 0L;
 	private String inputFileName;
-	private int numThreads = 1;
+	private InputStream inputStream;
+	private Integer numThreads = 1;
 	private String destAddress;
-	private int destPort;
+	private Integer destPort;
+	private boolean keepOriginalTimestamp = false; // Default
 
 	public static void main(String[] args) throws HL7Exception, LLPException, IOException, InterruptedException {
 		(new DorDriverApplication()).readAndSendMessages(args);
 	}
 
-	private List<String> readMessages(String inputFileName, long numMessages) throws IOException {
-		FileReader reader = new FileReader(inputFileName);
-		Iterator<String> it = new Hl7InputStreamMessageStringIterator(reader);
+	public DorDriverApplication() {
+
+	}
+
+	public DorDriverApplication(String destAddress, Integer destPort, Integer numThreads, boolean keepOriginalTimestamp) {
+		this(destAddress, destPort, null, null, null, numThreads, keepOriginalTimestamp);
+	}
+
+	public DorDriverApplication(String destAddress, Integer destPort, InputStream inputStream, Integer numMessages,
+			Long millisDelay, Integer numThreads, boolean keepOriginalTimestamp) {
+		this.destAddress = destAddress;
+		this.destPort = destPort;
+		this.inputStream = inputStream;
+		this.numMessages = numMessages;
+		this.millisDelay = millisDelay;
+		this.numThreads = numThreads;
+		this.keepOriginalTimestamp = keepOriginalTimestamp;
+	}
+
+	private List<String> readMessages(InputStream inputStream, long numMessages) throws IOException {
+		Iterator<String> it = new Hl7InputStreamMessageStringIterator(inputStream);
 
 		CanonicalModelClassFactory canonicalModelClassFactory = new CanonicalModelClassFactory("2.6");
 		HapiContext hapiContext = new DefaultHapiContext(canonicalModelClassFactory);
@@ -62,11 +84,10 @@ public class DorDriverApplication {
 			++messageIndex;
 		}
 
-		reader.close();
 		return messageStrings;
 	}
 
-	private void parseArgs(String[] args) {
+	private void parseArgs(String[] args) throws FileNotFoundException {
 
 		if (args.length < 3) {
 			printUsage();
@@ -75,6 +96,7 @@ public class DorDriverApplication {
 		destAddress = args[0];
 		destPort = Integer.parseInt(args[1]);
 		inputFileName = args[2];
+		inputStream = new FileInputStream(inputFileName);
 
 		if (args.length > 3) {
 			numMessages = Integer.parseInt(args[3]);
@@ -97,14 +119,17 @@ public class DorDriverApplication {
 	private void readAndSendMessages(String[] args) throws HL7Exception, LLPException, InterruptedException,
 			IOException {
 		parseArgs(args);
+		readAndSendMessages();
+	}
 
-		List<String> messages = readMessages(inputFileName, numMessages);
+	private void readAndSendMessages() throws HL7Exception, LLPException, InterruptedException, IOException {
+		List<String> messages = readMessages(inputStream, numMessages);
 
-		logger.info("Read " + messages.size() + " HL7v2 messages from file.");
+		logger.info("Read " + messages.size() + " HL7v2 messages from input stream.");
 		logger.info("Starting threads.");
 
 		List<SenderThreadResult> results = startAndWaitForThreads(numMessages, millisDelay, numThreads, destAddress,
-				destPort, messages);
+				destPort, messages, keepOriginalTimestamp);
 
 		logger.info("All threads completed.");
 
@@ -140,7 +165,8 @@ public class DorDriverApplication {
 	}
 
 	private List<SenderThreadResult> startAndWaitForThreads(int numMessages, long millisDelay, int numThreads,
-			String destAddress, int destPort, List<String> messages) throws InterruptedException {
+			String destAddress, int destPort, List<String> messages, boolean keepOriginalTimestamp)
+			throws InterruptedException {
 
 		List<SenderThread> threads = new ArrayList<>();
 		List<SenderThreadResult> results = new ArrayList<>();
@@ -149,7 +175,7 @@ public class DorDriverApplication {
 			SenderThreadResult result = new SenderThreadResult();
 			results.add(result);
 
-			SenderThread thread = new SenderThread(destAddress, destPort, messages, numMessages, millisDelay, result);
+			SenderThread thread = new SenderThread(destAddress, destPort, messages, numMessages, millisDelay, keepOriginalTimestamp, result);
 			threads.add(thread);
 
 			thread.start();
@@ -160,5 +186,26 @@ public class DorDriverApplication {
 		}
 
 		return results;
+	}
+
+	@Override
+	public void run() {
+		try {
+			readAndSendMessages();
+		} catch (HL7Exception | LLPException | InterruptedException | IOException e) {
+			logger.error("Failed to run DorDriverException.", e);
+		}
+	}
+
+	public void setNumMessages(Integer numMessages) {
+		this.numMessages = numMessages;
+	}
+
+	public void setMillisDelay(Long millisDelay) {
+		this.millisDelay = millisDelay;
+	}
+
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
 	}
 }

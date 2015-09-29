@@ -4,73 +4,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
-public class WaveFormData {
-	private static final String RANGE_HIGH_PREFIX = "RANGE_HIGH_";
-	private static final String RANGE_LOW_PREFIX = "RANGE_LOW_";
-	private static final String RATE_PREFIX = "RATE_";
-	private static final String SAMPLES_PREFIX = "SAMPLES_";
-	private List<Double> samples;
-	private double rangeLow;
-	private double rangeHigh;
-	private double rate;
-	private WaveFormType type;
+public class WaveFormData extends AbstractWaveFormData {
+	public WaveFormData() {
 
-	private String sampleSeparator = "^";
+	}
+
+	public WaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type,
+			String startTime, String endTime) {
+		super(samples, rangeLow, rangeHigh, rate, type, startTime, endTime);
+	}
+
+	public WaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type) {
+		super(samples, rangeLow, rangeHigh, rate, type);
+	}
 
 	public WaveFormData(WaveFormType type) {
-		this.type = type;
+		super(type);
 	}
 
-	public List<Double> getSamples() {
-		return samples;
-	}
-
-	public void setSamples(List<Double> samples) {
-		this.samples = samples;
-	}
-
-	public double getRangeLow() {
-		return rangeLow;
-	}
-
-	public void setRangeLow(double rangeLow) {
-		this.rangeLow = rangeLow;
-	}
-
-	public double getRangeHigh() {
-		return rangeHigh;
-	}
-
-	public void setRangeHigh(double rangeHigh) {
-		this.rangeHigh = rangeHigh;
-	}
-
-	public double getRate() {
-		return rate;
-	}
-
-	public void setRate(double rate) {
-		this.rate = rate;
-	}
-
-	public WaveFormType getType() {
-		return type;
-	}
-
-	public void setType(WaveFormType type) {
-		this.type = type;
-	}
-
+	@Override
 	public Map<String, String> toMap() {
 		Map<String, String> map = new HashMap<>();
-		map.put(SAMPLES_PREFIX + this.type,
-				StringUtils.join(this.samples, sampleSeparator));
-		map.put(RATE_PREFIX + this.type, Double.toString(this.rate));
-		map.put(RANGE_LOW_PREFIX + this.type, Double.toString(this.rangeLow));
-		map.put(RANGE_HIGH_PREFIX + this.type, Double.toString(this.rangeHigh));
+		map.put(SAMPLES_PREFIX + this.getType(), StringUtils.join(this.getSamples(), this.getSampleSeparator()));
+		map.put(RATE_PREFIX + this.getType(), Double.toString(this.getRate()));
+		map.put(RANGE_LOW_PREFIX + this.getType(), Double.toString(this.getRangeLow()));
+		map.put(RANGE_HIGH_PREFIX + this.getType(), Double.toString(this.getRangeHigh()));
+		map.put(START_TIME_KEY + this.getType(), this.getStartTime());
+		map.put(END_TIME_KEY + this.getType(), this.getEndTime());
 		return map;
 	}
-
 }

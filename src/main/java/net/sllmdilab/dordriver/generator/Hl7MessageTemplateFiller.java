@@ -55,7 +55,6 @@ public class Hl7MessageTemplateFiller {
 	private Double pulseRate = 70.0; // in bpm
 	private String deviceId = "C1007-123";
 	private String startTime = "20150617120000.000";
-	private String endTime = "20150617120001.000";
 	private WaveFormDataFactory wfFactory;
 	private Pattern placeholderPattern = Pattern.compile("<(\\w+?)>");
 
@@ -307,12 +306,12 @@ public class Hl7MessageTemplateFiller {
 		return map;
 	}
 
-	public Map<String, String> setupKeyReplacements(WaveFormData... wfData) {
+	public Map<String, String> setupKeyReplacements(AbstractWaveFormData... wfData) {
 		// General parameters
 		Map<String, String> keyRepl = getGeneralParams();
 		keyRepl.putAll(getTimeParams(0));
 
-		for (WaveFormData wf : wfData) {
+		for (AbstractWaveFormData wf : wfData) {
 			keyRepl.putAll(wf.toMap());
 		}
 		return keyRepl;
