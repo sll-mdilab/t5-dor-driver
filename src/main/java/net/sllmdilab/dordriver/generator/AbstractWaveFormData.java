@@ -26,7 +26,6 @@ public abstract class AbstractWaveFormData implements Mapable {
 	private String startTime;
 	private String endTime;
 	private WaveFormType type;
-	private String dataType;
 
 	private String sampleSeparator = "^";
 
@@ -48,13 +47,12 @@ public abstract class AbstractWaveFormData implements Mapable {
 	}
 
 	public AbstractWaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate,
-			WaveFormType type, String dataType, String startTime, String endTime) {
+			WaveFormType type, String startTime, String endTime) {
 		this.samples = samples;
 		this.rangeLow = rangeLow;
 		this.rangeHigh = rangeHigh;
 		this.rate = rate;
 		this.type = type;
-		this.dataType = dataType;
 		this.startTime = startTime;
 		this.endTime = endTime;
 	}
@@ -123,14 +121,6 @@ public abstract class AbstractWaveFormData implements Mapable {
 		this.sampleSeparator = sampleSeparator;
 	}
 
-	public String getDataType() {
-		return dataType;
-	}
-
-	public void setDataType(String dataType) {
-		this.dataType = dataType;
-	}
-
 	@Override
 	public abstract Map<String, String> toMap();
 
@@ -141,7 +131,7 @@ public abstract class AbstractWaveFormData implements Mapable {
 		}
 		AbstractWaveFormData that = (AbstractWaveFormData) obj;
 		boolean parametersEqual = this.rangeHigh == that.rangeHigh && this.rangeLow == that.rangeLow
-				&& this.rate == that.rate && this.type == that.type && this.dataType.equals(that.dataType);
+				&& this.rate == that.rate && this.type == that.type;
 		boolean timesEqual = T5FHIRUtils.convertHL7DateTypeToDate(this.startTime).equals(
 				T5FHIRUtils.convertHL7DateTypeToDate(that.startTime))
 				&& T5FHIRUtils.convertHL7DateTypeToDate(this.endTime).equals(

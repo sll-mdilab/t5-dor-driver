@@ -13,7 +13,7 @@ public class WaveFormData extends AbstractWaveFormData {
 
 	public WaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type,
 			String startTime, String endTime) {
-		super(samples, rangeLow, rangeHigh, rate, type, null, startTime, endTime);
+		super(samples, rangeLow, rangeHigh, rate, type, startTime, endTime);
 	}
 
 	public WaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type) {
