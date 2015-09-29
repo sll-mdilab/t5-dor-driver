@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class WaveFormData extends AbstractWaveFormData {
 	public WaveFormData() {
-		super();
+
 	}
 
 	public WaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type,

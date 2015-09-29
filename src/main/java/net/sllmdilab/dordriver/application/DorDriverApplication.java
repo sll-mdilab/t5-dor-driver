@@ -175,8 +175,7 @@ public class DorDriverApplication implements Runnable {
 			SenderThreadResult result = new SenderThreadResult();
 			results.add(result);
 
-			SenderThread thread = new SenderThread(destAddress, destPort, messages, numMessages, millisDelay, result,
-					keepOriginalTimestamp);
+			SenderThread thread = new SenderThread(destAddress, destPort, messages, numMessages, millisDelay, keepOriginalTimestamp, result);
 			threads.add(thread);
 
 			thread.start();

@@ -42,13 +42,14 @@ public class SenderThread extends Thread {
 	private Hl7Client hl7Client;
 	private ThreadPoolExecutor threadPoolExecutor;
 
-	public SenderThread(String destAddress, int destPort, List<String> messages, int numMessages, long millisDelay,
+	public SenderThread(String destAddress, int destPort, List<String> messages, int numMessages, long millisDelay, boolean keepOriginalTimestamp,
 			SenderThreadResult result) {
 
 		this.messages = messages;
 		this.numMessages = numMessages;
 		this.millisDelay = millisDelay;
 		this.result = result;
+		this.keepOriginalTimestamp = keepOriginalTimestamp;
 
 		// We need to have separate threads with separate HAPI contexts in order
 		// to make sure we have parallel connections. See
@@ -64,9 +65,8 @@ public class SenderThread extends Thread {
 	}
 
 	public SenderThread(String destAddress, int destPort, List<String> messages, int numMessages, long millisDelay,
-			SenderThreadResult result, boolean keepOriginalTimestamp) {
-		this(destAddress, destPort, messages, numMessages, millisDelay, result);
-		this.keepOriginalTimestamp = keepOriginalTimestamp;
+			SenderThreadResult result) {
+		this(destAddress, destPort, messages, numMessages, millisDelay, false, result);
 	}
 
 	@Override
@@ -221,12 +221,11 @@ public class SenderThread extends Thread {
 	 */
 	private void injectTimestampsForMessage(ORU_R01 message, Duration timestampDifference) throws HL7Exception {
 		message.getMSH().getDateTimeOfMessage().setValue(new Date());
-		if(this.keepOriginalTimestamp){
-			return;
-		}
-		for (ORU_R01_PATIENT_RESULT patientResult : message.getPATIENT_RESULTAll()) {
-			for (ORU_R01_ORDER_OBSERVATION orderObservation : patientResult.getORDER_OBSERVATIONAll()) {
-				injectTimestampsForOrderObservation(timestampDifference, orderObservation);
+		if(!this.keepOriginalTimestamp){
+			for (ORU_R01_PATIENT_RESULT patientResult : message.getPATIENT_RESULTAll()) {
+				for (ORU_R01_ORDER_OBSERVATION orderObservation : patientResult.getORDER_OBSERVATIONAll()) {
+					injectTimestampsForOrderObservation(timestampDifference, orderObservation);
+				}
 			}
 		}
 	}

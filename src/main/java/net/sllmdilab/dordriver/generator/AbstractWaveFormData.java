@@ -34,16 +34,11 @@ public abstract class AbstractWaveFormData implements Mapable {
 	}
 
 	public AbstractWaveFormData(WaveFormType type) {
-		this.type = type;
+		this(null, .0, .0, .0, type, null, null);
 	}
 
 	public AbstractWaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate, WaveFormType type) {
-		super();
-		this.samples = samples;
-		this.rangeLow = rangeLow;
-		this.rangeHigh = rangeHigh;
-		this.rate = rate;
-		this.type = type;
+		this(samples, rangeLow, rangeHigh, rate, type, null, null);
 	}
 
 	public AbstractWaveFormData(List<Double> samples, double rangeLow, double rangeHigh, double rate,
